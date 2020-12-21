@@ -1,34 +1,38 @@
-class TCPState(object):
-    pass
-
-
 class TCPConnection(object):
     def __init__(self):
-        self._state = TCPState()
+        # self._state is an instance of TCPState.
+        # Initialized with closed state.
+        self._state = TCPClosedState()
 
+    """
+    Delegates state-specific requests to its TCPState instance.
+    """
     def active_open(self):
-        pass
+        self._state.active_open(tcp_connection=self)
 
     def passive_open(self):
-        pass
+        self._state.passive_open(tcp_connection=self)
 
     def close(self):
-        pass
+        self._state.close(tcp_connection=self)
 
     def send(self):
-        pass
+        self._state.send(tcp_connection=self)
 
     def acknowledge(self):
-        pass
+        self._state.acknowledge(tcp_connection=self)
 
     def synchronize(self):
-        pass
+        self._state.synchronize(tcp_connection=self)
 
     def _change_state(self, state):
-        pass
+        self._state = state
 
 
 class TCPState(object):
+    """TCP State. Inherited by all concrete states. TCPState maintains no
+    state internally. This class implements default for all states.
+    """
     def transmit(tcp_connection, tcp_stream):
         pass
 
@@ -55,6 +59,26 @@ class TCPState(object):
     def synchronize(self, tcp_connection):
         pass
 
-    def _change_state(self, tcp_connection, tcp_state):
-        pass
 
+class TCPEstablishedState(TCPState):
+    def transmit(self, tcp_connection, tcp_stream):
+        print(f"Transferred data {tcp_stream}")
+
+    def close(self, tcp_connection):
+        print('Sent FIN, received ACK of FIN')
+        tcp_connection._change_state(TCPListenState())
+
+
+class TCPListenState(TCPState):
+    def send(self, tcp_connection):
+        print("Sent SYN, received SYN, ACK etc.")
+        tcp_connection._change_state(TCPEstablishedState())
+
+
+class TCPClosedState(TCPState):
+    def active_open(self, tcp_connection):
+        print('Sent SYN, received SYN, ACK etc')
+        tcp_connection._change_state(TCPEstablishedState())
+
+    def passive_open(self, tcp_connection):
+        tcp_connection._change_state(TCPListenState())
