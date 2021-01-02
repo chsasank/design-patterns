@@ -34,6 +34,7 @@ class PasteCommand(Command):
 
 
 class MacroCommand(Command):
+    """Composite of commands."""
     def __init__(self):
         self._commands = []
         super().__init__()
